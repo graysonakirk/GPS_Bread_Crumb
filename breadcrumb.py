@@ -2,6 +2,7 @@ import pandas as pd
 import serial           
 from time import sleep       
 from datetime import datetime
+import RPi.GPIO as GPIO
 
 # Initilize 
 df = pd.DataFrame(columns=['Time', 'Lat', 'Long'])
@@ -11,6 +12,16 @@ GPGGA_buffer = 0
 NMEA_buff = 0
 lat_in_degrees = 0
 long_in_degrees = 0
+countn=0
+global status
+status=1
+
+# GPIO Setup
+BUTTON_GPIO = 16
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+
 
 
 def convert_to_degrees(raw_value):
@@ -45,13 +56,46 @@ def get_gps_data():
             n+=1
     return {"Time": time, "Lat": lat_in_degrees, "Long":long_in_degrees}
 
-k=0
-while k<5:
-    print(get_gps_data())
-    data=get_gps_data()
-    df=df.append(data,ignore_index=True)
-    sleep(1)
-    k+=1
+def record_data(df):
+        data=get_gps_data()
+        df=df.append(data,ignore_index=True)
+        return df
 
-print(df)
+
+def callback_fall(a):
+    print(str(a)+"  Switch Triggered")
+    global status
+    global countn
+    global double_flick
+    countn+=1
+    double_flick+=1
+    if double_flick == 2:
+        status=2
+    elif countn % 2 ==0:
+        status=1
+    elif countn %2 == 1:
+        status=0
+    
+# This sets up the interrupt mechanism to operate the switch
+GPIO.add_event_detect(BUTTON_GPIO, GPIO.BOTH, 
+        callback=callback_fall, bouncetime=50)
+
+while(True):
+    if status == 0:
+        print("Recording Data")
+        # df = pd.DataFrame(columns=['Time', 'Lat', 'Long'])
+        # record_data(df)
+        sleep(2)
+        double_flick=0
+    if status == 1:
+        print("Paused Recording Data")
+        sleep(2)
+        double_flick=0
+    if status == 2:
+        print("Saved and Reset \n#\n#\n#\n#")
+        sleep(2)
+        status=1
+        countn=0
+
+
 
