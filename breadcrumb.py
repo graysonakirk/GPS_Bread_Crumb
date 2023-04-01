@@ -2,6 +2,7 @@ import pandas as pd
 import serial           
 from time import sleep       
 from datetime import datetime
+import RPi.GPIO as GPIO
 
 # Initilize 
 df = pd.DataFrame(columns=['Time', 'Lat', 'Long'])
@@ -11,6 +12,11 @@ GPGGA_buffer = 0
 NMEA_buff = 0
 lat_in_degrees = 0
 long_in_degrees = 0
+countn=0
+global status
+
+
+BUTTON_GPIO = 16
 
 
 def convert_to_degrees(raw_value):
@@ -44,6 +50,44 @@ def get_gps_data():
             # sleep(1)
             n+=1
     return {"Time": time, "Lat": lat_in_degrees, "Long":long_in_degrees}
+
+def record_data(df):
+        data=get_gps_data()
+        df=df.append(data,ignore_index=True)
+        return df
+
+
+def callback():
+     countn+=1
+     status=False
+
+
+
+
+
+        
+
+
+
+if __name__ == '__main__':
+    GPIO.setmode(GPIO.BCM)
+    
+    GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(BUTTON_GPIO, GPIO.FALLING, 
+            callback=callback, bouncetime=200)
+    
+    while(True):
+        if status is True:
+            df = pd.DataFrame(columns=['Time', 'Lat', 'Long'])
+            record_data(df)
+            sleep(2)
+        else:
+             
+    
+         
+
+    
+
 
 k=0
 while k<5:
