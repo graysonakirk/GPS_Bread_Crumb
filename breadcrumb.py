@@ -15,6 +15,7 @@ long_in_degrees = 0
 countn=0
 global status
 status=1
+df = pd.DataFrame(columns=['Time', 'Lat', 'Long'])
 
 # GPIO Setup
 BUTTON_GPIO = 16
@@ -44,8 +45,8 @@ def get_gps_data():
             nmea_latitude = NMEA_buff[1]                #extract latitude from GPGGA string
             nmea_longitude = NMEA_buff[3]               #extract longitude from GPGGA string
             time=0
-            print("NMEA Time: ", nmea_time,'\n')
-            print ("NMEA Latitude:", nmea_latitude,"NMEA Longitude:", nmea_longitude,'\n')
+            # print("NMEA Time: ", nmea_time,'\n')
+            # print ("NMEA Latitude:", nmea_latitude,"NMEA Longitude:", nmea_longitude,'\n')
             time=datetime.strptime(nmea_time[:-3], "%H%M%S").time()
             lat = float(nmea_latitude)                  #convert string into float for calculation
             longi = float(nmea_longitude)               #convertr string into float for calculation
@@ -83,16 +84,19 @@ GPIO.add_event_detect(BUTTON_GPIO, GPIO.BOTH,
 while(True):
     if status == 0:
         print("Recording Data")
-        # df = pd.DataFrame(columns=['Time', 'Lat', 'Long'])
-        # record_data(df)
+        print(get_gps_data())
+        df=record_data(df)
         sleep(2)
         double_flick=0
     if status == 1:
         print("Paused Recording Data")
+        get_gps_data() #just to dump buffer
         sleep(2)
         double_flick=0
     if status == 2:
         print("Saved and Reset \n#\n#\n#\n#")
+        df.to_csv(f"{datetime.now()}_GPS_LOG")
+        df= pd.DataFrame(columns=['Time', 'Lat', 'Long'])
         sleep(2)
         status=1
         countn=0
