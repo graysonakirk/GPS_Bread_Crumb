@@ -30,7 +30,7 @@ def convert_to_degrees(raw_value):
     degrees = int(decimal_value)
     mm_mmmm = (decimal_value - int(decimal_value))/0.6
     position = degrees + mm_mmmm
-    position = "%.4f" %(position)
+    position = "%.8f" %(position) #changed from 4 to 8
     return position
 
 def get_gps_data():
